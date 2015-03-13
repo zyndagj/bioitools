@@ -17,10 +17,9 @@ setup(name = "bioitools",
 	author_email="gzynda@tacc.utexas.edu",
 	license="GNU",
 	description="Bioinformatics tools",
-	#requires=[
-	#	'numpy',
-	#	'matplotlib'],
+	requires=['numpy','pywt'],
 	packages = ["bioitools"],
+	scripts = ["bin/bioitools"],
 	test_suite="tests")
 	#ext_modules=[mod1],
 	#package_data={'bioitools/test_data':['test.fa.fai']})

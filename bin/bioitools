@@ -1,0 +1,69 @@
+#!/usr/bin/python
+
+import sys
+import bioitools
+import argparse
+
+def main():
+	if len(sys.argv) < 2:
+		usage()
+	if sys.argv[1] == "smooth":
+		smooth(sys.argv[2:])
+	elif sys.argv[1] == "fastaRemove":
+		fastaRemove(sys.argv[2:])
+	else:
+		usage()
+
+def smooth(argList):
+	parser = argparse.ArgumentParser(description="Takes in a bedgraph file, applies either hann or haar smoothing and prints the transformed bedgraph.", prog="bioitools smooth")
+	parser.add_argument('method',help='Smoothing method [haar|hann]')
+	parser.add_argument('-b',metavar="N",help="Use %(metavar)s bins in hann smoothing (Default %(default)s)", default=20, type=int)
+	parser.add_argument('-p',metavar='F',help="Remove lower %(metavar)s percent of variation using after haar wavelet transform (Default %(default)s)", default=80, type=float)
+	parser.add_argument('infile',metavar='BEDGRAPH', help="Bedgraph file to be smoothed")
+	if not argList:
+		parser.print_help()
+		return
+	args = parser.parse_args(argList)
+	if args.method not in ['haar','hann']:
+		parser.print_help()
+		sys.exit()
+	# parse bedgraph
+	c, s, e, v = bioitools.ParseBedgraph(argList[1])
+	if args.method == 'haar':
+		print "got haar"
+	if args.method == 'hann':
+		print "got hann"
+
+def fastaRemove(argList):
+	parser = argparse.ArgumentParser(description="Prints fasta records from a specified fasta that don't match the given regular expression.", prog="bioitools fastaRemove")
+	parser.add_argument('regex',metavar="REGEX", help='Regular expression matching fasta records to remove')
+	parser.add_argument('infile',metavar="FASTA", help="Fasta file for input")
+	if not argList:
+		parser.print_help()
+		return
+	args = parser.parse_args(argList)
+	parser
+	if len(argList) != 2:
+		usage()
+	bioitools._checkFile(argList[1],[".fasta",".fa"])
+	regex = re.compile(argList[0])
+	p = False
+	for line in open(argList[1], 'r'):
+		if line[0] == '>':
+			if regex.match(line):
+				p = True
+			else:
+				p = False
+		if p:
+			print line[:-1]
+
+def usage():
+	print "Available programs"
+	print "================\nsmooth\n================"
+	smooth(None)
+	print "================\nfastaRemove\n================"
+	fastaRemove(None)
+	sys.exit()
+
+if __name__ == "__main__":
+	main()
