@@ -32,8 +32,8 @@ Takes in a bedgraph file, applies either hann or haar smoothing and prints the
 transformed bedgraph.
 
 positional arguments:
-  method      Smoothing method [haar|hann]
-  BEDGRAPH    Bedgraph file to be smoothed
+|  method   |   Smoothing method [haar|hann] |
+|  BEDGRAPH  |  Bedgraph file to be smoothed |
 
 optional arguments:
   -h, --help  show this help message and exit
