@@ -31,15 +31,19 @@ usage: `bioitools smooth [-h] [-b N] [-p F] method BEDGRAPH`
 Takes in a bedgraph file, applies either hann or haar smoothing and prints the
 transformed bedgraph.
 
-positional arguments:
-|  method   |   Smoothing method [haar|hann] |
-|  BEDGRAPH  |  Bedgraph file to be smoothed |
+#### Positional Arguments
 
-optional arguments:
-  -h, --help  show this help message and exit
-  -b N        Use N bins in hann smoothing (Default 20)
-  -p F        Remove lower F percent of variation using after haar wavelet
-              transform (Default 80)
+| Argument | Description |
+|----------|-------------|
+| method   | smoothing method \[haar\|hann\] |
+| BEDGRAPH | Bedgraph file to be smoothed |
+
+#### Optional Arguments
+
+| Argument | Description |
+|----------|-------------|
+| -b N     | Use N bins in hann smoothing \(Default 20\) |
+| -p F     | Remove lower F percent of variation using after haar wavelet transform \(Default 80\) |
 
 ### fastaRemove
 
