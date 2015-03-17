@@ -2,6 +2,7 @@
 
 import sys
 import bioitools
+from bioitools import smoothers
 import argparse
 
 def main():
@@ -27,12 +28,12 @@ def smooth(argList):
 	if args.method not in ['haar','hann']:
 		parser.print_help()
 		sys.exit()
-	# parse bedgraph
 	c, s, e, v = bioitools.ParseBedgraph(argList[1])
-	if args.method == 'haar':
-		print "got haar"
-	if args.method == 'hann':
-		print "got hann"
+	chromDict = bioitools._ChromBounds(c)
+	if not bioitools.smoothers.isContiguous(s, e, chromDict):
+		raise("Bedgraph must be contiguous")
+	smoothV = bioitools.smoothers.runSmoother(args.method, args.p, args.b, v, chromDict)
+	bioitools.PrintBedgraph(c,s,e,smoothV)
 
 def fastaRemove(argList):
 	parser = argparse.ArgumentParser(description="Prints fasta records from a specified fasta that don't match the given regular expression.", prog="bioitools fastaRemove")
