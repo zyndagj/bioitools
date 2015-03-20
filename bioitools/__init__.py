@@ -18,6 +18,16 @@ def _ChromBounds(chromList):
 	chromDict[current] = (first,i+1)
 	return chromDict
 
+def TranslateSamFlag(flag):
+	Message = ("paired in sequencing","a proper pair","unmapped","mate is mapped","forward","mate is reversed","the first read","the second read","not primary","fails qc","a duplicate","a supplrementary alignment")
+	outMessage = "Got flag %i\nThe read is "%(flag)
+	tArray = map(int,bin(flag)[::-1].split('b')[0])
+	blocks = []
+	for i in xrange(len(tArray)):
+		if tArray[i]:
+			blocks.append(Message[i])
+	print outMessage+', '.join(blocks)+'.'
+
 def ParseBedgraph(inFile):
 	'''
 	Parses a bedgraph (.bedgraph, .bg) into a tuple, where each record is a tuple corresponding to (chr, start, end, value). This will only parse the first four columns.
