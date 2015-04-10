@@ -20,7 +20,7 @@ def main():
 		usage()
 
 def repliCorr(argList):
-	parser = argparse.ArgumentParser(description"Takes in a 2+ bedgraph files, performs a Phi Correlation (http://en.wikipedia.org/wiki/Phi_coefficient), and plots the result.", prog="bioitools repliCorr")
+	parser = argparse.ArgumentParser(description="Takes in a 2+ bedgraph files, performs a Phi Correlation (http://en.wikipedia.org/wiki/Phi_coefficient), and plots the result.", prog="bioitools repliCorr")
 	parser.add_argument('-o',metavar="PNG", help="File to write figure to (Default %(default)s)", default="figure.png")
 	parser.add_argument('-p',metavar="BOOL", help="Plot figure (Default %(default)s)", type=bool, default=True)
 	parser.add_argument('bgs',metavar='BG', help="Bedgraph files (At least 2 required)", nargs="+")
