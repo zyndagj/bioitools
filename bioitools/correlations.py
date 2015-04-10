@@ -25,7 +25,7 @@ def makeRepliCorr(inFiles, outFile, makePlot):
 	labels = map(lambda x: os.path.split(x)[1], inFiles)
 	D = []
 	for f in inFiles:
-		c,s,e,v = bioitools.ParseBedgraph(f)
+		c,s,e,v = ParseBedgraph(f)
 		D.append(repToBool(v))
 	nD = np.array(D)
 	pd = distance.squareform(distance.pdist(nD, phiCorr))
