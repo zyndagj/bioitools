@@ -20,7 +20,6 @@ def main():
 		usage()
 
 def repliCorr(argList):
-	import numpy as np
 	parser = argparse.ArgumentParser(description="Takes in a 2+ bedgraph files, performs a Phi Correlation (http://en.wikipedia.org/wiki/Phi_coefficient), and plots the result.", prog="bioitools repliCorr")
 	parser.add_argument('-o',metavar="PNG", help="File to write figure to (Default %(default)s)", default="figure.png")
 	parser.add_argument('-p',metavar="BOOL", help="Plot figure (Default %(default)s)", type=bool, default=True)
@@ -32,37 +31,7 @@ def repliCorr(argList):
 	if len(args.bgs) < 2:
 		parser.print_help()
 		sys.exit("Please specify at least two bedgraph files\n")
-	labels = map(lambda x: os.path.split(x)[1], args.bgs)
-	D = []
-	for f in args.bgs:
-		c,s,e,v = bioitools.ParseBedgraph(f)
-		D.append(correlations.repToBool(v))
-	nD = np.array(D)
-	pd = distance.squareform(distance.pdist(nD, correlations.phiCorr))
-	clusters = h.linkage(pd, method='complete')
-	if args.p:
-		import matplotlib
-		matplotlib.use("Agg")
-		import matplotlib.pyplot as plt
-		import matplotlib.gridspec as gs
-		fig = plt.figure(figsize=(10,3))
-		hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, width_ratios=[0.2,1])
-		denAX = fig.add_subplot(hmGS[0,0])
-		den = h.dendrogram(clusters, orientation="right")
-		plt.axis('off')
-		hmAX = fig.add_subplot(hmGS[0,1])
-		axi = plt.imshow(nD[den['leaves']], aspect='auto', origin='lower', interpolation='nearest', cmap='RdBu')
-		hmAX.set_yticks(range(nD.shape[0]))
-		hmAX.yaxis.set_ticks_position('right')
-		hmAX.set_xticklabels("")
-		hmAX.set_yticklabels(labels[den['leaves']])
-		for l in hmAX.get_xticklines()+hmAX.get_yticklines():
-			l.set_markersize(0)
-		plt.savefig(args.o)
-	print clusters
-
-	
-	
+	correlations.makeRepliCorr(args.bgs, args.o, args.p)
 
 def smooth(argList):
 	parser = argparse.ArgumentParser(description="Takes in a bedgraph file, applies either hann or haar smoothing and prints the transformed bedgraph.", prog="bioitools smooth")
