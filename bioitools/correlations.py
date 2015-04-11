@@ -14,7 +14,7 @@ def phiCorr(x,y):
 	n00 = np.sum(np.logical_not(np.logical_or(x1,y1)))
 	N = np.array([[n11,n10],[n01,n00]])
 	nDot = np.hstack((np.sum(N,axis=0),np.sum(N,axis=1)))
-	return (n11*n00-n10*n01)/np.sqrt(np.multiply.reduce(nDot))
+	return (n11*n00-n10*n01)/np.sqrt(np.multiply.reduce(nDot, dtype=np.float32), dtype=np.float32)
 
 def repToBool(vals):
 	out = np.zeros(len(vals),dtype=np.bool)
@@ -22,21 +22,23 @@ def repToBool(vals):
 	return out
 
 def makeRepliCorr(inFiles, outFile, makePlot):
-	labels = map(lambda x: os.path.split(x)[1], inFiles)
+	import bioitools
+	labels = np.array(map(lambda x: os.path.split(x)[1], inFiles))
 	D = []
 	for f in inFiles:
-		c,s,e,v = ParseBedgraph(f)
+		c,s,e,v = bioitools.ParseBedgraph(f)
 		D.append(repToBool(v))
 	nD = np.array(D)
-	pd = distance.squareform(distance.pdist(nD, phiCorr))
+	d = distance.pdist(nD, phiCorr)
+	pd = distance.squareform(d)
 	clusters = h.linkage(pd, method='complete')
-	if args.p:
+	if makePlot:
 		import matplotlib
 		matplotlib.use("Agg")
 		import matplotlib.pyplot as plt
 		import matplotlib.gridspec as gs
-		fig = plt.figure(figsize=(10,3))
-		hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, width_ratios=[0.2,1])
+		fig = plt.figure(figsize=(15,3))
+		hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, width_ratios=[0.15,1])
 		denAX = fig.add_subplot(hmGS[0,0])
 		den = h.dendrogram(clusters, orientation="right")
 		plt.axis('off')
@@ -48,5 +50,5 @@ def makeRepliCorr(inFiles, outFile, makePlot):
 		hmAX.set_yticklabels(labels[den['leaves']])
 		for l in hmAX.get_xticklines()+hmAX.get_yticklines():
 			l.set_markersize(0)
-		plt.savefig(args.o)
-	print clusters
+		plt.savefig(outFile)
+	print pd

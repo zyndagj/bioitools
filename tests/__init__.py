@@ -3,6 +3,7 @@ import numpy as np
 from os import path
 import bioitools
 from bioitools import smoothers
+from bioitools import correlations
 
 class TestBioitools(unittest.TestCase):
 	def setUp(self):
@@ -27,6 +28,10 @@ class TestBioitools(unittest.TestCase):
 		c,s,e,v = bioitools.ParseBedgraph(self.badBed)
 		chromDict = bioitools._ChromBounds(c)
 		self.assertEqual(smoothers.isContiguous(s,e,chromDict),False)
+	def test_phiCorr(self):
+		A = np.array([0,0,1,1,0,0],dtype=np.bool)
+		self.assertEqual(correlations.phiCorr(A,A), 1)
+		self.assertEqual(correlations.phiCorr(A,np.logical_not(A)), -1)
 
 if __name__ == '__main__':
     unittest.main()
