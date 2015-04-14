@@ -59,3 +59,22 @@ positional arguments:
 optional arguments:
   -h, --help  show this help message and exit
 
+### repliCorr
+
+usage: `bioitools repliCorr [-h] [-o PNG] [-s BOOL] [-r BOOL] BG [BG ...]`
+
+repliCorr calculates the correlation of 2 re more replication bedgraph files using the [Phi Correlation coefficient](http://en.wikipedia.org/wiki/Phi_coefficient) and plots the result. 
+                                                                        
+#### Positional Arguments
+
+| Argument | Description |
+|----------|-------------|
+| BG | Bedgraph files |
+                                                                        
+#### Optional Arguments
+
+| Argument | Description |
+|----------|-------------|
+| -o PNG | File to write figure to (Default: figure.png) |
+| -s BOOL | Save figure (Default: True) |
+| -r BOOL | Render figure (Default: False) |

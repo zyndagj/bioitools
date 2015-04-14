@@ -16,39 +16,51 @@ def phiCorr(x,y):
 	nDot = np.hstack((np.sum(N,axis=0),np.sum(N,axis=1)))
 	return (n11*n00-n10*n01)/np.sqrt(np.multiply.reduce(nDot, dtype=np.float32), dtype=np.float32)
 
+def phiDist(x,y):
+	'''
+	Returns 1-(Phi Correlation Coefficient)
+	'''
+	return 1.0-phiCorr(x,y)
+
 def repToBool(vals):
 	out = np.zeros(len(vals),dtype=np.bool)
 	out[vals > 0] = 1
 	return out
 
-def makeRepliCorr(inFiles, outFile, makePlot):
+def makeRepliCorr(inFiles, outFile, savePlot, renderPlot):
 	import bioitools
-	labels = np.array(map(lambda x: os.path.split(x)[1], inFiles))
+	labels = np.array(map(lambda x: os.path.splitext(os.path.split(x)[1])[0], inFiles))
 	D = []
 	for f in inFiles:
 		c,s,e,v = bioitools.ParseBedgraph(f)
 		D.append(repToBool(v))
 	nD = np.array(D)
-	d = distance.pdist(nD, phiCorr)
+	d = distance.pdist(nD, phiDist)
 	pd = distance.squareform(d)
 	clusters = h.linkage(pd, method='complete')
-	if makePlot:
-		import matplotlib
-		matplotlib.use("Agg")
+	if savePlot or renderPlot:
+		if not renderPlot:
+			import matplotlib
+			matplotlib.use("Agg")
 		import matplotlib.pyplot as plt
 		import matplotlib.gridspec as gs
 		fig = plt.figure(figsize=(15,3))
-		hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, width_ratios=[0.15,1])
+		hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.85, width_ratios=[1,15])
 		denAX = fig.add_subplot(hmGS[0,0])
 		den = h.dendrogram(clusters, orientation="right")
 		plt.axis('off')
 		hmAX = fig.add_subplot(hmGS[0,1])
-		axi = plt.imshow(nD[den['leaves']], aspect='auto', origin='lower', interpolation='nearest', cmap='RdBu')
+		axi = plt.imshow(nD[den['leaves']], aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu')
 		hmAX.set_yticks(range(nD.shape[0]))
 		hmAX.yaxis.set_ticks_position('right')
 		hmAX.set_xticklabels("")
 		hmAX.set_yticklabels(labels[den['leaves']])
 		for l in hmAX.get_xticklines()+hmAX.get_yticklines():
 			l.set_markersize(0)
-		plt.savefig(outFile)
-	print pd
+		cbGS = gs.GridSpec(1,1,left=0.97, right=0.98)
+		cbAX = fig.add_subplot(cbGS[0,0])
+		plt.colorbar(axi, cax=cbAX, use_gridspec=True)
+		if savePlot:
+			plt.savefig(outFile)
+		if renderPlot:
+			plt.show()

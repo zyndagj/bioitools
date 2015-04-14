@@ -20,8 +20,9 @@ def main():
 
 def repliCorr(argList):
 	parser = argparse.ArgumentParser(description="Takes in a 2+ bedgraph files, performs a Phi Correlation (http://en.wikipedia.org/wiki/Phi_coefficient), and plots the result.", prog="bioitools repliCorr")
-	parser.add_argument('-o',metavar="PNG", help="File to write figure to (Default %(default)s)", default="figure.png")
-	parser.add_argument('-p',metavar="BOOL", help="Plot figure (Default %(default)s)", type=bool, default=True)
+	parser.add_argument('-o',metavar="PNG", help="File to write figure to (Default: %(default)s)", default="figure.png")
+	parser.add_argument('-s',metavar="BOOL", help="Save figure (Default: %(default)s)", type=bool, default=True)
+	parser.add_argument('-r',metavar="BOOL", help="Render figure (Default: %(default)s)", type=bool, default=False)
 	parser.add_argument('bgs',metavar='BG', help="Bedgraph files (At least 2 required)", nargs="+")
 	if not argList:
 		parser.print_help()
@@ -30,7 +31,7 @@ def repliCorr(argList):
 	if len(args.bgs) < 2:
 		parser.print_help()
 		sys.exit("Please specify at least two bedgraph files\n")
-	correlations.makeRepliCorr(args.bgs, args.o, args.p)
+	correlations.makeRepliCorr(args.bgs, args.o, args.s, args.r)
 
 def smooth(argList):
 	parser = argparse.ArgumentParser(description="Takes in a bedgraph file, applies either hann or haar smoothing and prints the transformed bedgraph.", prog="bioitools smooth")
