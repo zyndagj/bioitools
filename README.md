@@ -2,6 +2,8 @@
 
 A suite of python libraries for interacting with bioinformatics files.
 
+## Dependencies
+
 ## Installation
 
 As a local install
@@ -47,17 +49,17 @@ transformed bedgraph.
 
 ### fastaRemove
 
-usage: bioitools fastaRemove [-h] REGEX FASTA
+usage: `bioitools fastaRemove [-h] REGEX FASTA`
 
 Prints fasta records from a specified fasta that don't match the given regular
 expression.
 
-positional arguments:
-  REGEX       Regular expression matching fasta records to remove
-  FASTA       Fasta file for input
+#### Positional Arguments
 
-optional arguments:
-  -h, --help  show this help message and exit
+| Argument | Description |
+|----------|-------------|
+| REGEX | Regular expression matching fasta records to remove |
+| FASTA | Fasta file for input |
 
 ### repliCorr
 
