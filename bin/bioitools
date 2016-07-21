@@ -101,6 +101,7 @@ def smooth(args):
 	bioitools.PrintBedgraph(c,s,e,smoothV)
 
 def fastaRemove(args):
+	import re
 	regex = re.compile(args.regex[0])
 	p = False
 	for line in open(args.infile[0], 'r'):
