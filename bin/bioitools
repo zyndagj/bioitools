@@ -107,6 +107,7 @@ def fastaRemove(args):
 	for line in open(args.infile[0], 'r'):
 		if line[0] == '>':
 			if regex.match(line):
+				sys.stderr.write('Keeping: %s\n'%(line[:-1]))
 				p = True
 			else:
 				p = False
