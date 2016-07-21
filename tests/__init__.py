@@ -4,6 +4,7 @@ from os import path
 import bioitools
 from bioitools import smoothers
 from bioitools import correlations
+from bioitools import fileParsers
 
 class TestBioitools(unittest.TestCase):
 	def setUp(self):
@@ -11,7 +12,7 @@ class TestBioitools(unittest.TestCase):
 		self.goodBed = path.join(path.dirname(__file__),'test.bedgraph')
 		self.badBed = path.join(path.dirname(__file__),'bad.bedgraph')
 	def test_parseFai(self):
-		self.assertEqual(bioitools.ParseFai(self.faiFile), {'Chr1':30427671, 'Chr2':19698289, 'Chr3':23459830})
+		self.assertEqual(fileParsers.fai(self.faiFile), {'Chr1':30427671, 'Chr2':19698289, 'Chr3':23459830})
 	def test_bounds(self):
 		self.assertEqual(bioitools._ChromBounds([1,1,1,2,2,3,4]), {1:(0,3), 2:(3,5), 3:(5,6), 4:(6,7)})
 	def test_contiguous(self):

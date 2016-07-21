@@ -1,73 +1,109 @@
 #!/usr/bin/env python
 
 import sys
+import os
 import bioitools
 from bioitools import smoothers
 from bioitools import correlations
+from bioitools import fileParsers
 import argparse
 
 def main():
-	if len(sys.argv) < 2:
-		usage()
-	if sys.argv[1] == "smooth":
-		smooth(sys.argv[2:])
-	elif sys.argv[1] == "fastaRemove":
-		fastaRemove(sys.argv[2:])
-	elif sys.argv[1] == "repliCorr":
-		repliCorr(sys.argv[2:])
-	else:
-		usage()
+	parser = argparse.ArgumentParser(description="A suite of python libraries for interacting with bioinformatics files")
+	subparsers = parser.add_subparsers()
+	##############################################
+	# repliCorr
+	##############################################
+	parser_repliCorr = subparsers.add_parser('repliCorr', help='Phi Correlation analysis', description="Takes in a 2+ bedgraph files, performs a Phi Correlation (http://en.wikipedia.org/wiki/Phi_coefficient), and plots the result.")
+	parser_repliCorr.add_argument('-o',metavar="PNG", help="File to write figure to (Default: %(default)s)", default="figure.png")
+	parser_repliCorr.add_argument('-s',metavar="BOOL", help="Save figure (Default: %(default)s)", type=bool, default=True)
+	parser_repliCorr.add_argument('-r',metavar="BOOL", help="Render figure (Default: %(default)s)", type=bool, default=False)
+	parser_repliCorr.add_argument('bgs',metavar='BG', help="Bedgraph files (At least 2 required)", nargs="+")
+	parser_repliCorr.set_defaults(func=repliCorr)
+	##############################################
+	# smooth
+	##############################################
+	sMethods = ('haar','hann')
+	parser_smooth = subparsers.add_parser('smooth', help='bedgraph smoother', description="Takes in a bedgraph file, applies either hann or haar smoothing and prints the transformed bedgraph.")
+	parser_smooth.add_argument('-m', metavar="STR",\
+		help="Smoothing method ("+'|'.join(sMethods)+" Default:%(default)s)",\
+		type=_argChecker(sMethods, "method").check, default="haar")
+	parser_smooth.add_argument('-b', metavar="N",\
+		help="Use %(metavar)s bins in hann smoothing (Default %(default)s)",\
+		default=20, type=int)
+	parser_smooth.add_argument('-p',metavar='F',help="Remove lower %(metavar)s percent of variation using after haar wavelet transform (Default %(default)s)", default=80, type=float)
+	parser_smooth.add_argument('infile',metavar='BEDGRAPH', help="Bedgraph file to be smoothed", type=_checkFile().bedgraph, nargs=1)
+	parser_smooth.set_defaults(func=smooth)
+	##############################################
+	#  fastaRemove
+	##############################################
+	parser_fastaRemove = subparsers.add_parser('fastaRemove', help="Filters fasta", description="Prints fasta records from a specified fasta that don't match the given regular expression.")
+	parser_fastaRemove.add_argument('regex',metavar="REGEX", help='Regular expression matching fasta records to remove', nargs=1)
+	parser_fastaRemove.add_argument('infile',metavar="FASTA", help="Fasta file for input", type=_checkFile().fasta, nargs=1)
+	parser_fastaRemove.set_defaults(func=fastaRemove)
+	##############################################
+	#  assemblyStats
+	##############################################
+	parser_assemblyStats = subparsers.add_parser('assemblyStats', help="Calculates assembly stats", description="Calculates the assembly statistics for a fasta assembly")
+	parser_assemblyStats.add_argument('--plot', action="store_true", help='Plot the density')
+	parser_assemblyStats.add_argument('--title', metavar="STR", help='Title for figure')
+	parser_assemblyStats.add_argument('infile',metavar="FASTA", help="Fasta file for input", nargs=1, type=_checkFile().fasta)
+	parser_assemblyStats.set_defaults(func=assemblyStats)
+	##############################################
+	# Parse and RUN
+	##############################################
+	args = parser.parse_args()
+	args.func(args)
 
-def repliCorr(argList):
-	parser = argparse.ArgumentParser(description="Takes in a 2+ bedgraph files, performs a Phi Correlation (http://en.wikipedia.org/wiki/Phi_coefficient), and plots the result.", prog="bioitools repliCorr")
-	parser.add_argument('-o',metavar="PNG", help="File to write figure to (Default: %(default)s)", default="figure.png")
-	parser.add_argument('-s',metavar="BOOL", help="Save figure (Default: %(default)s)", type=bool, default=True)
-	parser.add_argument('-r',metavar="BOOL", help="Render figure (Default: %(default)s)", type=bool, default=False)
-	parser.add_argument('bgs',metavar='BG', help="Bedgraph files (At least 2 required)", nargs="+")
-	if not argList:
-		parser.print_help()
-		return
-	args = parser.parse_args(argList)
+class _argChecker():
+	def __init__(self, options, afterValid):
+		self.options = options
+		self.av = afterValid
+	def check(self, x):
+		if x in self.options:
+			return x
+		else:
+			raise argparse.ArgumentTypeError("%s not a valid %s"%(x, self.av))
+
+class _checkFile:
+	def check(self, file, exts):
+		ext = os.path.splitext(file)[1][1:]
+		fName = os.path.split(file)[1]
+		if not ext in exts:
+			raise argparse.ArgumentTypeError("%s not a %s"%(fName, exts[0]))
+		if not os.path.exists(file):
+			raise argparse.ArgumentTypeError("%s does not exist"%(file))
+	def fastq(self, file):
+		self.check(file, ['fastq','fq'])
+		return file
+	def fasta(self, file):
+		self.check(file, ['fasta','fa','fna'])
+		return file
+	def bedgraph(self, file):
+		self.check(file, ['bedgraph','bedGraph','bg'])
+		return file
+	def fai(self, file):
+		self.check(file, ['fai'])
+		return file
+
+def repliCorr(args):
 	if len(args.bgs) < 2:
 		parser.print_help()
 		sys.exit("Please specify at least two bedgraph files\n")
 	correlations.makeRepliCorr(args.bgs, args.o, args.s, args.r)
 
-def smooth(argList):
-	parser = argparse.ArgumentParser(description="Takes in a bedgraph file, applies either hann or haar smoothing and prints the transformed bedgraph.", prog="bioitools smooth")
-	parser.add_argument('method',help='Smoothing method [haar|hann]')
-	parser.add_argument('-b',metavar="N",help="Use %(metavar)s bins in hann smoothing (Default %(default)s)", default=20, type=int)
-	parser.add_argument('-p',metavar='F',help="Remove lower %(metavar)s percent of variation using after haar wavelet transform (Default %(default)s)", default=80, type=float)
-	parser.add_argument('infile',metavar='BEDGRAPH', help="Bedgraph file to be smoothed")
-	if not argList:
-		parser.print_help()
-		return
-	args = parser.parse_args(argList)
-	if args.method not in ['haar','hann']:
-		parser.print_help()
-		sys.exit()
-	c, s, e, v = bioitools.ParseBedgraph(args.infile)
+def smooth(args):
+	c, s, e, v = bioitools.ParseBedgraph(args.infile[0])
 	chromDict = bioitools._ChromBounds(c)
 	if not bioitools.smoothers.isContiguous(s, e, chromDict):
 		raise("Bedgraph must be contiguous")
 	smoothV = bioitools.smoothers.runSmoother(args.method, args.p, args.b, v, chromDict)
 	bioitools.PrintBedgraph(c,s,e,smoothV)
 
-def fastaRemove(argList):
-	parser = argparse.ArgumentParser(description="Prints fasta records from a specified fasta that don't match the given regular expression.", prog="bioitools fastaRemove")
-	parser.add_argument('regex',metavar="REGEX", help='Regular expression matching fasta records to remove')
-	parser.add_argument('infile',metavar="FASTA", help="Fasta file for input")
-	if not argList:
-		parser.print_help()
-		return
-	args = parser.parse_args(argList)
-	parser
-	if len(argList) != 2:
-		usage()
-	bioitools._checkFile(argList[1],[".fasta",".fa"])
-	regex = re.compile(argList[0])
+def fastaRemove(args):
+	regex = re.compile(args.regex[0])
 	p = False
-	for line in open(argList[1], 'r'):
+	for line in open(args.infile[0], 'r'):
 		if line[0] == '>':
 			if regex.match(line):
 				p = True
@@ -76,15 +112,31 @@ def fastaRemove(argList):
 		if p:
 			print line[:-1]
 
-def usage():
-	print "Available programs"
-	print "================\nsmooth\n================"
-	smooth(None)
-	print "================\nfastaRemove\n================"
-	fastaRemove(None)
-	print "================\nrepliCorr\n================"
-	repliCorr(None)
-	sys.exit()
+def assemblyStats(args):
+	fai = args.infile[0]+'.fai'
+	if os.path.exists(fai):
+		chrDict = fileParsers.fai(fai)
+		sizes = chrDict.values()
+		del chrDict
+	else:
+		sizes = []
+		for header, seq in fileParsers.fasta(args.infile[0]):
+			sizes.append(len(seq))
+	totalBases = sum(sizes)
+	sizes.sort(reverse=True)
+	half = totalBases/2.0
+	print('%-25s:%i'%("Total Bases",totalBases))
+	print('%-25s:%i'%("Largest Contig",sizes[0]))
+	print('%-25s:%i'%("Number of Contigs",len(sizes)))
+	accum = 0
+	for i in range(len(sizes)):
+		accum+=sizes[i]
+		if accum >= half:
+			N50 = i+1
+			L50 = sizes[i]
+			break
+	print('%-25s:%i'%("N50",N50))
+	print('%-25s:%i'%("L50",L50))
 
 if __name__ == "__main__":
 	main()
