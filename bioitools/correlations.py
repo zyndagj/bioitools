@@ -27,7 +27,7 @@ def repToBool(vals):
 	out[vals > 0] = 1
 	return out
 
-def makeRepliCorr(inFiles, outFile, savePlot, renderPlot):
+def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
 	import bioitools
 	labels = np.array(map(lambda x: os.path.splitext(os.path.split(x)[1])[0], inFiles))
 	D = []
@@ -44,22 +44,42 @@ def makeRepliCorr(inFiles, outFile, savePlot, renderPlot):
 			matplotlib.use("Agg")
 		import matplotlib.pyplot as plt
 		import matplotlib.gridspec as gs
-		fig = plt.figure(figsize=(15,3))
-		hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.85, width_ratios=[1,15])
-		denAX = fig.add_subplot(hmGS[0,0])
-		den = h.dendrogram(clusters, orientation="right")
-		plt.axis('off')
-		hmAX = fig.add_subplot(hmGS[0,1])
-		axi = plt.imshow(nD[den['leaves']], aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu')
-		hmAX.set_yticks(range(nD.shape[0]))
-		hmAX.yaxis.set_ticks_position('right')
-		hmAX.set_xticklabels("")
-		hmAX.set_yticklabels(labels[den['leaves']])
-		for l in hmAX.get_xticklines()+hmAX.get_yticklines():
-			l.set_markersize(0)
-		cbGS = gs.GridSpec(1,1,left=0.97, right=0.98)
-		cbAX = fig.add_subplot(cbGS[0,0])
-		plt.colorbar(axi, cax=cbAX, use_gridspec=True)
+		if figType == 'genome':
+			fig = plt.figure(figsize=(15,3))
+			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.85, width_ratios=[1,15])
+			denAX = fig.add_subplot(hmGS[0,0])
+			den = h.dendrogram(clusters, orientation="right")
+			plt.axis('off')
+			hmAX = fig.add_subplot(hmGS[0,1])
+			axi = plt.imshow(nD[den['leaves']], aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu')
+			hmAX.set_yticks(range(nD.shape[0]))
+			hmAX.yaxis.set_ticks_position('right')
+			hmAX.set_xticklabels("")
+			hmAX.set_yticklabels(labels[den['leaves']])
+			for l in hmAX.get_xticklines()+hmAX.get_yticklines():
+				l.set_markersize(0)
+			cbGS = gs.GridSpec(1,1,left=0.97, right=0.98)
+			cbAX = fig.add_subplot(cbGS[0,0])
+			plt.colorbar(axi, cax=cbAX, use_gridspec=True)
+		elif figType = 'matrix':
+			fig = plt.figure(figsize=(5,4))
+			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.85, width_ratios=[1,15])
+			denAX = fig.add_subplot(hmGS[0,0])
+			den = h.dendrogram(clusters, orientation="right")
+			plt.axis('off')
+			hmAX = fig.add_subplot(hmGS[0,1])
+			axi = plt.imshow(pd, aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu')
+			hmAX.set_yticks(range(nD.shape[0]))
+			hmAX.yaxis.set_ticks_position('right')
+			hmAX.set_xticklabels("")
+			hmAX.set_yticklabels(labels[den['leaves']])
+			for l in hmAX.get_xticklines()+hmAX.get_yticklines():
+				l.set_markersize(0)
+			cbGS = gs.GridSpec(1,1,left=0.97, right=0.98)
+			cbAX = fig.add_subplot(cbGS[0,0])
+			plt.colorbar(axi, cax=cbAX, use_gridspec=True)
+		else:
+			raise ValueError("Incorrect figure type: %s"%(figType))
 		if savePlot:
 			plt.savefig(outFile)
 		if renderPlot:
