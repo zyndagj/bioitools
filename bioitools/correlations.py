@@ -31,13 +31,6 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
 	import bioitools
 	labels = np.array(map(lambda x: os.path.splitext(os.path.split(x)[1])[0], inFiles))
 	D = []
-	for f in inFiles:
-		c,s,e,v = bioitools.ParseBedgraph(f)
-		D.append(repToBool(v))
-	nD = np.array(D)
-	d = distance.pdist(nD, phiDist)
-	pd = distance.squareform(d)
-	clusters = h.linkage(pd, method='complete')
 	if savePlot or renderPlot:
 		if not renderPlot:
 			import matplotlib
@@ -45,6 +38,15 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
 		import matplotlib.pyplot as plt
 		import matplotlib.gridspec as gs
 		if figType == 'genome':
+			# Calculate distance
+			for f in inFiles:
+				c,s,e,v = bioitools.ParseBedgraph(f)
+				D.append(repToBool(v))
+			nD = np.array(D)
+			d = distance.pdist(nD, phiDist)
+			pd = distance.squareform(d)
+			clusters = h.linkage(pd, method='complete')
+			# Build figure
 			fig = plt.figure(figsize=(15,3))
 			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.85, width_ratios=[1,15])
 			denAX = fig.add_subplot(hmGS[0,0])
@@ -61,21 +63,35 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
 			cbGS = gs.GridSpec(1,1,left=0.97, right=0.98)
 			cbAX = fig.add_subplot(cbGS[0,0])
 			plt.colorbar(axi, cax=cbAX, use_gridspec=True)
-		elif figType = 'matrix':
-			fig = plt.figure(figsize=(5,4))
-			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.85, width_ratios=[1,15])
+		elif figType == 'matrix':
+			# Calculate distance
+			for f in inFiles:
+				c,s,e,v = bioitools.ParseBedgraph(f)
+				D.append(v)
+			nD = np.array(D)
+			d = distance.pdist(nD, 'correlation')
+			pd = distance.squareform(d)
+			clusters = h.linkage(pd, method='complete')
+			# Build figure
+			fH = min((int(pd.shape[0]/2),3))
+			fig = plt.figure(figsize=(1+fH, fH))
+			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.75, bottom=0.12, width_ratios=[1,fH])
 			denAX = fig.add_subplot(hmGS[0,0])
 			den = h.dendrogram(clusters, orientation="right")
 			plt.axis('off')
 			hmAX = fig.add_subplot(hmGS[0,1])
-			axi = plt.imshow(pd, aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu')
-			hmAX.set_yticks(range(nD.shape[0]))
+			axi = plt.imshow(1-pd[den['leaves']], aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu')
+			#axi = plt.pcolor(1-pd[den['leaves']], cmap='YlGnBu', linewidth=2, edgecolors='w')
+			#hmAX.set_yticks(np.arange(nD.shape[0])+0.5)
+			hmAX.set_yticks(np.arange(nD.shape[0]))
 			hmAX.yaxis.set_ticks_position('right')
-			hmAX.set_xticklabels("")
+			hmAX.set_xticks(np.arange(nD.shape[0]))
+			hmAX.set_xticklabels(labels, rotation=45)
 			hmAX.set_yticklabels(labels[den['leaves']])
+			plt.title("Sample Correlation")
 			for l in hmAX.get_xticklines()+hmAX.get_yticklines():
 				l.set_markersize(0)
-			cbGS = gs.GridSpec(1,1,left=0.97, right=0.98)
+			cbGS = gs.GridSpec(1,1,left=0.89, right=0.92)
 			cbAX = fig.add_subplot(cbGS[0,0])
 			plt.colorbar(axi, cax=cbAX, use_gridspec=True)
 		else:
