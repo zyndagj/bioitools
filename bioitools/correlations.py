@@ -73,9 +73,9 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
 			pd = distance.squareform(d)
 			clusters = h.linkage(pd, method='complete')
 			# Build figure
-			fH = min((int(pd.shape[0]/2),3))
+			fH = max((int(pd.shape[0]/2),3))
 			fig = plt.figure(figsize=(1+fH, fH))
-			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.75, bottom=0.12, width_ratios=[1,fH])
+			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.75, bottom=0.12, top=(1.0-0.3/fH), width_ratios=[1,fH])
 			denAX = fig.add_subplot(hmGS[0,0])
 			den = h.dendrogram(clusters, orientation="right", link_color_func=lambda k: 'blue')
 			plt.axis('off')
