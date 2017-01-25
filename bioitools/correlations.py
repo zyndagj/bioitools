@@ -27,7 +27,7 @@ def repToBool(vals):
 	out[vals > 0] = 1
 	return out
 
-def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
+def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot, distMethod):
 	import bioitools
 	labels = np.array(map(lambda x: os.path.splitext(os.path.split(x)[1])[0], inFiles))
 	D = []
@@ -37,15 +37,34 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
 			matplotlib.use("Agg")
 		import matplotlib.pyplot as plt
 		import matplotlib.gridspec as gs
-		if figType == 'genome':
-			# Calculate distance
-			for f in inFiles:
-				c,s,e,v = bioitools.ParseBedgraph(f)
+		# Calculate distance
+		from multiprocessing import Pool
+		p = Pool(16)
+		from functools import partial
+		pPB = partial(bioitools.ParseBedgraph, vOnly=True)
+		ret = p.map(pPB, inFiles)
+		p.close()
+		p.join()
+		#for i in inFiles:
+		for i in range(len(inFiles)):
+			v = ret[i]
+			#c,s,e,v = bioitools.ParseBedgraph(f)
+			if distMethod == 'pearson':
+				D.append(v)
+			elif distMethod == 'phi':
 				D.append(repToBool(v))
-			nD = np.array(D)
+			else:
+				sys.exit("Not a valid distance method")
+		nD = np.array(D)
+		if distMethod == 'pearson':
+			d = distance.pdist(nD, 'correlation')
+		elif distMethod == 'phi':
 			d = distance.pdist(nD, phiDist)
-			pd = distance.squareform(d)
-			clusters = h.linkage(pd, method='complete')
+		else:
+			sys.exit("Not a valid distance method")
+		pd = distance.squareform(d)
+		clusters = h.linkage(pd, method='complete')
+		if figType == 'genome':
 			# Build figure
 			fig = plt.figure(figsize=(15,3))
 			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.85, width_ratios=[1,15])
@@ -64,29 +83,23 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
 			cbAX = fig.add_subplot(cbGS[0,0])
 			plt.colorbar(axi, cax=cbAX, use_gridspec=True)
 		elif figType == 'matrix':
-			# Calculate distance
-			for f in inFiles:
-				c,s,e,v = bioitools.ParseBedgraph(f)
-				D.append(v)
-			nD = np.array(D)
-			d = distance.pdist(nD, 'correlation')
-			pd = distance.squareform(d)
-			clusters = h.linkage(pd, method='complete')
 			# Build figure
-			fH = min((int(pd.shape[0]/2),3))
-			fig = plt.figure(figsize=(1+fH, fH))
-			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.75, bottom=0.12, width_ratios=[1,fH])
+			fH = max((int(pd.shape[0]/2),3))
+			fig = plt.figure(figsize=(2+fH, fH))
+			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.75, bottom=0.12, width_ratios=[1,fH+1])
 			denAX = fig.add_subplot(hmGS[0,0])
-			den = h.dendrogram(clusters, orientation="right")
+			den = h.dendrogram(clusters, orientation="left")
 			plt.axis('off')
 			hmAX = fig.add_subplot(hmGS[0,1])
-			axi = plt.imshow(1-pd[den['leaves']], aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu')
+			M = pd[den['leaves'], :]
+			M = M[:,den['leaves']]
+			axi = plt.imshow(1-M, aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu', vmin=0, vmax=1)
 			#axi = plt.pcolor(1-pd[den['leaves']], cmap='YlGnBu', linewidth=2, edgecolors='w')
 			#hmAX.set_yticks(np.arange(nD.shape[0])+0.5)
 			hmAX.set_yticks(np.arange(nD.shape[0]))
 			hmAX.yaxis.set_ticks_position('right')
 			hmAX.set_xticks(np.arange(nD.shape[0]))
-			hmAX.set_xticklabels(labels, rotation=45)
+			hmAX.set_xticklabels(labels[den['leaves']], rotation=45)
 			hmAX.set_yticklabels(labels[den['leaves']])
 			plt.title("Sample Correlation")
 			for l in hmAX.get_xticklines()+hmAX.get_yticklines():
@@ -94,6 +107,11 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot):
 			cbGS = gs.GridSpec(1,1,left=0.89, right=0.92)
 			cbAX = fig.add_subplot(cbGS[0,0])
 			plt.colorbar(axi, cax=cbAX, use_gridspec=True)
+			# Print correlation matrix
+			sLabels=list(labels[den['leaves']])
+			print '\t'.join([' ']+sLabels)
+			for i in range(len(M)):
+				print '\t'.join([sLabels[i]]+map(str, 1-M[i].round(2)))
 		else:
 			raise ValueError("Incorrect figure type: %s"%(figType))
 		if savePlot:

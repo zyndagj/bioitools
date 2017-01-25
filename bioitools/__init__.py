@@ -29,7 +29,7 @@ def TranslateSamFlag(flag):
 			blocks.append(Message[i])
 	print outMessage+', '.join(blocks)+'.'
 
-def ParseBedgraph(inFile):
+def ParseBedgraph(inFile, vOnly=False):
 	'''
 	Parses a bedgraph (.bedgraph, .bg) into a tuple, where each record is a tuple corresponding to (chr, start, end, value). This will only parse the first four columns.
 
@@ -41,12 +41,17 @@ def ParseBedgraph(inFile):
 	startList = []
 	endList = []
 	valList = []
-	for chrom, start, end, rest in fileParsers.bedgraph(inFile):
-		chrList.append(chrom)
-		startList.append(start)
-		endList.append(end)
-		valList.append(float(rest[0]))
-	return chrList, np.array(startList,dtype=np.uint32), np.array(endList,dtype=np.uint32), np.array(valList,dtype=np.float32)
+	if vOnly:
+		for chrom, start, end, rest in fileParsers.bedgraph(inFile):
+			valList.append(float(rest[0]))
+		return np.array(valList, dtype=np.float32)
+	else:
+		for chrom, start, end, rest in fileParsers.bedgraph(inFile):
+			chrList.append(chrom)
+			startList.append(start)
+			endList.append(end)
+			valList.append(float(rest[0]))
+		return chrList, np.array(startList,dtype=np.uint32), np.array(endList,dtype=np.uint32), np.array(valList,dtype=np.float32)
 
 def PrintBedgraph(c, s, e, v):
 	lC = len(c)

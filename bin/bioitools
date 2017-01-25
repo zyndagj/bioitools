@@ -14,8 +14,9 @@ def main():
 	##############################################
 	# repliCorr
 	##############################################
-	parser_repliCorr = subparsers.add_parser('repliCorr', help='Phi Correlation analysis', description="Takes in a 2+ bedgraph files, performs a Phi Correlation (http://en.wikipedia.org/wiki/Phi_coefficient), and plots the result.")
+	parser_repliCorr = subparsers.add_parser('repliCorr', help='Bedgraph correlation analysis', description="Takes in a 2+ bedgraph files, performs a Phi Correlation (http://en.wikipedia.org/wiki/Phi_coefficient), and plots the result.")
 	parser_repliCorr.add_argument('-t',metavar="TYPE", help="Type of figure ([genome]|matrix)", default="genome")
+	parser_repliCorr.add_argument('-m',metavar="CORR", help="Correlation method ([phi]|pearson)", default="phi")
 	parser_repliCorr.add_argument('-o',metavar="PNG", help="File to write figure to (Default: %(default)s)", default="figure.png")
 	parser_repliCorr.add_argument('-s',metavar="BOOL", help="Save figure (Default: %(default)s)", type=bool, default=True)
 	parser_repliCorr.add_argument('-r',metavar="BOOL", help="Render figure (Default: %(default)s)", type=bool, default=False)
@@ -91,7 +92,7 @@ def repliCorr(args):
 	if len(args.bgs) < 2:
 		parser.print_help()
 		sys.exit("Please specify at least two bedgraph files\n")
-	correlations.makeRepliCorr(args.t, args.bgs, args.o, args.s, args.r)
+	correlations.makeRepliCorr(args.t, args.bgs, args.o, args.s, args.r, args.m)
 
 def smooth(args):
 	c, s, e, v = bioitools.ParseBedgraph(args.infile[0])
