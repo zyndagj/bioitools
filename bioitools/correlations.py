@@ -85,6 +85,7 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot, distMethod):
 		elif figType == 'matrix':
 			# Build figure
 			fH = max((int(pd.shape[0]/2),3))
+<<<<<<< HEAD
 			fig = plt.figure(figsize=(2+fH, fH))
 			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.75, bottom=0.12, width_ratios=[1,fH+1])
 			denAX = fig.add_subplot(hmGS[0,0])
@@ -94,6 +95,15 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot, distMethod):
 			M = pd[den['leaves'], :]
 			M = M[:,den['leaves']]
 			axi = plt.imshow(1-M, aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu', vmin=0, vmax=1)
+=======
+			fig = plt.figure(figsize=(1+fH, fH))
+			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.75, bottom=0.12, top=(1.0-0.3/fH), width_ratios=[1,fH])
+			denAX = fig.add_subplot(hmGS[0,0])
+			den = h.dendrogram(clusters, orientation="right", link_color_func=lambda k: 'blue')
+			plt.axis('off')
+			hmAX = fig.add_subplot(hmGS[0,1])
+			axi = plt.imshow(1-pd[:,den['leaves']][den['leaves']], aspect='auto', origin='lower', interpolation='nearest', cmap='rainbow', vmin=0, vmax=1)
+>>>>>>> 500084442d61d5d2d1f0f8a977ae7c25ae824fa1
 			#axi = plt.pcolor(1-pd[den['leaves']], cmap='YlGnBu', linewidth=2, edgecolors='w')
 			#hmAX.set_yticks(np.arange(nD.shape[0])+0.5)
 			hmAX.set_yticks(np.arange(nD.shape[0]))
