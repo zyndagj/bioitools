@@ -12,7 +12,7 @@ except:
 #mod1 = Extension('cIO', sources=["fastqc_py/cIO.c"])
 
 setup(name = "bioitools",
-	version = "0.1.2",
+	version = "0.1.3",
 	author = "Greg Zynda",
 	author_email="gzynda@tacc.utexas.edu",
 	license="GNU",

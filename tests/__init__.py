@@ -25,6 +25,11 @@ class TestBioitools(unittest.TestCase):
 		cDict = bioitools._ChromBounds(c)
 		self.assertEqual(cDict,{'1':(0,8)})
 		self.assertEqual(smoothers.isContiguous(s,e,cDict),True)
+	def test_average(self):
+		c,s,e,v = bioitools.ParseBedgraph(self.goodBed)
+		np.testing.assert_array_equal(v,np.array([1,2,3,1,2,3,4,0]))
+		np.testing.assert_array_equal(smoothers.reflectArray(v,3),np.array([3,2,1,2,3,1,2,3,4,0,4,3]))
+		np.testing.assert_allclose(smoothers.average(v,3),np.array([2,5/3.0,2,2,2,2,3,7/3.0,8/3.0,7/3.0]), atol=0.00001)
 	def test_badFile(self):
 		c,s,e,v = bioitools.ParseBedgraph(self.badBed)
 		chromDict = bioitools._ChromBounds(c)
