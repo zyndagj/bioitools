@@ -28,8 +28,12 @@ class TestBioitools(unittest.TestCase):
 	def test_average(self):
 		c,s,e,v = bioitools.ParseBedgraph(self.goodBed)
 		np.testing.assert_array_equal(v,np.array([1,2,3,1,2,3,4,0]))
-		np.testing.assert_array_equal(smoothers.reflectArray(v,3),np.array([3,2,1,2,3,1,2,3,4,0,4,3]))
-		np.testing.assert_allclose(smoothers.average(v,3),np.array([2,5/3.0,2,2,2,2,3,7/3.0,8/3.0,7/3.0]), atol=0.00001)
+		np.testing.assert_array_equal(smoothers.reflectArray(v,3)[0],np.array([2,1,2,3,1,2,3,4,0,4]))
+		ref4 = np.array([2,1,2,3,1,2,3,4,0,4,3])
+		np.testing.assert_array_equal(smoothers.reflectArray(v,4)[0], ref4)
+		avg4 = np.mean([ ref4[i:i+4] for i in range(len(ref4)-3)], 1)
+		np.testing.assert_allclose(smoothers.average(v,3),np.array([5/3.0, 2, 2, 2, 2, 3, 7/3.0, 8/3.0]), atol=0.00001)
+		np.testing.assert_allclose(smoothers.average(v,4), avg4, atol=0.00001)
 	def test_badFile(self):
 		c,s,e,v = bioitools.ParseBedgraph(self.badBed)
 		chromDict = bioitools._ChromBounds(c)

@@ -27,7 +27,7 @@ def main():
 	##############################################
 	sMethods = ('haar','hann','average')
 	parser_smooth = subparsers.add_parser('smooth', help='bedgraph smoother', description="Takes in a bedgraph file, applies either hann or haar smoothing and prints the transformed bedgraph. Boundaries are reflected and chromosomes are processed individually.")
-	parser_smooth.add_argument('-m', metavar="STR",\
+	parser_smooth.add_argument('-m','--method', metavar="STR",\
 		help="Smoothing method ("+'|'.join(sMethods)+" Default:%(default)s)",\
 		type=_argChecker(sMethods, "method").check, default="haar")
 	parser_smooth.add_argument('-b', metavar="N",\
