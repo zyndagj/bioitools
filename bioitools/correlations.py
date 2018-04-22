@@ -27,16 +27,23 @@ def repToBool(vals):
 	out[vals > 0] = 1
 	return out
 
-def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot, distMethod):
+def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot, distMethod, titleString):
 	import bioitools
 	labels = np.array(map(lambda x: os.path.splitext(os.path.split(x)[1])[0], inFiles))
 	D = []
 	if savePlot or renderPlot:
+		import matplotlib
 		if not renderPlot:
-			import matplotlib
 			matplotlib.use("Agg")
 		import matplotlib.pyplot as plt
 		import matplotlib.gridspec as gs
+		def get_font_width(nChars, font_size, dpi):
+			f = plt.figure(1, figsize=(10,10), dpi=dpi)
+			r = f.canvas.get_renderer()
+			t = plt.text(0.5, 0.5, 'G'*nChars, fontsize=font_size)
+			right_width = t.get_window_extent(renderer=r).width
+			plt.close(f)
+			return right_width
 		# Calculate distance
 		from multiprocessing import Pool
 		p = Pool(16)
@@ -84,34 +91,86 @@ def makeRepliCorr(figType, inFiles, outFile, savePlot, renderPlot, distMethod):
 			plt.colorbar(axi, cax=cbAX, use_gridspec=True)
 		elif figType == 'matrix':
 			# Build figure
-			fH = max((int(pd.shape[0]/2),3))
-			fig = plt.figure(figsize=(2+fH, fH))
-			hmGS = gs.GridSpec(1,2,wspace=0, hspace=0, left=0.01, right=0.75, bottom=0.12, top=(1.0-0.3/fH), width_ratios=[1,fH+1])
-			denAX = fig.add_subplot(hmGS[0,0])
+			from matplotlib import rcParams
+			rcParams['pdf.fonttype'] = 42
+			rcParams['svg.fonttype'] = 'none'
+			old_settings = np.seterr(all='ignore')
+			# Number of inputs
+			num_rows = pd.shape[0]
+			maxLabelChars = max(map(len, labels))
+			dpi = 100 if renderPlot else 200
+			padding = dpi/8
+			bottom_pad = padding*3
+			den_width = dpi
+			main_px = dpi*2/3*num_rows if num_rows <= 4 else dpi/2*num_rows
+			#font_size = 12 if num_rows <= 4 else 9
+			font_size = max(min(int(12 - 0.25 * (num_rows-6)), 13), 8)
+			right_width = get_font_width(maxLabelChars, font_size, dpi)
+			top_height = np.ceil(float(right_width)/np.sqrt(2))
+			title_space = dpi*1/2
+			cbar_height = dpi/4
+			total_width_px = padding + den_width + padding + main_px + padding + right_width + padding
+			tW = float(total_width_px)
+			total_height_px = bottom_pad + cbar_height + padding + main_px + padding + top_height + title_space 
+			tH = float(total_height_px)
+			# Initialize figure
+			fig = plt.figure(1,figsize=(total_width_px/dpi, total_height_px/dpi), dpi=dpi)
+			#fig = plt.figure(figsize=(11, 9.5)) if num_rows < 20 else plt.figure(figsize=(11.0*1.5, 9.5*1.5))
+			# Write title
+			if titleString:
+				plt.suptitle(titleString)
+			else:
+				plt.suptitle("Sample Correlation")
+			plt.axis('off')
+			# Caluclate and set font size
+			#font_size = max(min(int(13 - 0.25 * (num_rows-6)), 13), 5)
+			rcParams.update({'font.size': font_size})
+			# Make dendrogram
+			axdendro = fig.add_axes([padding/tW, (bottom_pad+cbar_height+padding)/tH, den_width/tW, main_px/tH])
+    			#axdendro.set_axis_off()
 			den = h.dendrogram(clusters, orientation="left")
 			plt.axis('off')
-			hmAX = fig.add_subplot(hmGS[0,1])
-			M = pd[den['leaves'], :]
-			M = M[:,den['leaves']]
-			axi = plt.imshow(1-M, aspect='auto', origin='lower', interpolation='nearest', cmap='YlGnBu', vmin=0, vmax=1)
-			#axi = plt.pcolor(1-pd[den['leaves']], cmap='YlGnBu', linewidth=2, edgecolors='w')
-			#hmAX.set_yticks(np.arange(nD.shape[0])+0.5)
-			hmAX.set_yticks(np.arange(nD.shape[0]))
-			hmAX.yaxis.set_ticks_position('right')
-			hmAX.set_xticks(np.arange(nD.shape[0]))
-			hmAX.set_xticklabels(labels[den['leaves']], rotation=45)
-			hmAX.set_yticklabels(labels[den['leaves']])
-			plt.title("Sample Correlation")
-			for l in hmAX.get_xticklines()+hmAX.get_yticklines():
-				l.set_markersize(0)
-			cbGS = gs.GridSpec(1,1,left=0.89, right=0.92)
-			cbAX = fig.add_subplot(cbGS[0,0])
-			plt.colorbar(axi, cax=cbAX, use_gridspec=True)
+			#axdendro.set_xticks([])
+			#axdendro.set_yticks([])
+			# Sort matrix
+			index = den['leaves']
+			M = 1-pd[index, :]
+			M = M[:, index]
+			# Calculate vmin
+			vmin = 0 if M.min() >= 0 else -1
+			# Draw color matrix
+			axmatrix = fig.add_axes([(padding*2+den_width)/tW, (bottom_pad+cbar_height+padding)/tH, main_px/tW, main_px/tH])
+			#axmatrix = fig.add_axes([0.13, 0.1, 0.6, 0.7])
+			cmatrix = axmatrix.pcolormesh(M, edgecolors='white', cmap='PiYG', vmax=1, vmin=vmin)
+			plt.box(on=None)
+    			axmatrix.set_xlim(0, num_rows)
+    			axmatrix.set_ylim(0, num_rows)
+			# Write yticks
+    			axmatrix.yaxis.tick_right()
+    			axmatrix.set_yticks(np.arange(num_rows) + 0.5)
+    			axmatrix.set_yticklabels(labels[index])
+			# Write xticks
+			axmatrix.xaxis.set_tick_params(labeltop='on')
+			axmatrix.xaxis.set_tick_params(labelbottom='off')
+			axmatrix.set_xticks(np.arange(M.shape[0]) + 0.5)
+			axmatrix.set_xticklabels(labels[index],rotation=45,ha='left')
+			# Style ticks
+			axmatrix.tick_params(axis='x', which='both', bottom='off', top='off')
+			axmatrix.tick_params(axis='y', which='both', left='off', right='off')
+			# Plot colorbar.
+			axcolor = fig.add_axes([(padding*2+den_width)/tW, (bottom_pad)/tH, main_px/tW, cbar_height/tH])
+			#axcolor = fig.add_axes([0.13, 0.065, 0.6, 0.02])
+			cbar = plt.colorbar(cmatrix, cax=axcolor, orientation='horizontal')
+			cbar.solids.set_edgecolor("face")
+			for row in range(num_rows):
+				for col in range(num_rows):
+					textColor = 'white' if abs(M[row,col]) >= 0.5 else 'black'
+					axmatrix.text(row + 0.5, col + 0.5, "{:.2f}".format(M[row, col]), ha='center', va='center', color=textColor)
 			# Print correlation matrix
 			sLabels=list(labels[den['leaves']])
 			print '\t'.join([' ']+sLabels)
 			for i in range(len(M)):
-				print '\t'.join([sLabels[i]]+map(str, 1-M[i].round(2)))
+				print '\t'.join([sLabels[i]]+map(str, M[i].round(2)))
 		else:
 			raise ValueError("Incorrect figure type: %s"%(figType))
 		if savePlot:
