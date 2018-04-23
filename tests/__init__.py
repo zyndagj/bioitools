@@ -5,6 +5,9 @@ import bioitools
 from bioitools import smoothers
 from bioitools import correlations
 from bioitools import fileParsers
+from bioitools import normalize
+from StringIO import StringIO
+import sys
 
 class TestBioitools(unittest.TestCase):
 	def setUp(self):
@@ -42,6 +45,20 @@ class TestBioitools(unittest.TestCase):
 		A = np.array([0,0,1,1,0,0],dtype=np.bool)
 		self.assertEqual(correlations.phiCorr(A,A), 1)
 		self.assertEqual(correlations.phiCorr(A,np.logical_not(A)), -1)
+	def test_rpgcNormalize(self):
+		sys.stdout = StringIO()
+		normalize.rpgcNormalize(self.goodBed)
+		retVal = sys.stdout.getvalue()
+		goodVal = '''1	0	10	5
+1	10	20	10
+1	20	30	15
+1	30	40	5
+1	40	50	10
+1	50	60	15
+1	60	70	20
+1	70	80	0
+'''
+		self.assertMultiLineEqual(retVal, goodVal)
 
 if __name__ == '__main__':
     unittest.main()

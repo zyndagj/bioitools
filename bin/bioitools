@@ -4,6 +4,7 @@ import sys
 import os
 import bioitools
 from bioitools import smoothers
+from bioitools import normalize
 from bioitools import correlations
 from bioitools import fileParsers
 import argparse
@@ -11,6 +12,14 @@ import argparse
 def main():
 	parser = argparse.ArgumentParser(description="A suite of python libraries for interacting with bioinformatics files")
 	subparsers = parser.add_subparsers()
+	##############################################
+	# normalizer
+	##############################################
+	parser_normalizer = subparsers.add_parser('normalize', help='Normalize bedgraph file', description="Normalizes a bedgraph file")
+	nMethods = ('RPGC',)
+	parser_normalizer.add_argument('-m','--method',metavar="STR", help="Normalization method:\n - [RPGC] - 1x depth (reads per genome coverage)", default="RPGC", type=_argChecker(nMethods, "method").check)
+	parser_normalizer.add_argument('infile',metavar='BEDGRAPH', help="Bedgraph file to be smoothed", type=_checkFile().bedgraph, nargs=1)
+	parser_normalizer.set_defaults(func=normalizer)
 	##############################################
 	# repliCorr
 	##############################################
@@ -88,6 +97,10 @@ class _checkFile:
 	def fai(self, file):
 		self.check(file, ['fai'])
 		return file
+
+def normalizer(args):
+	if args.method == 'RPGC':
+		normalize.rpgcNormalize(args.infile[0])
 
 def repliCorr(args):
 	if len(args.bgs) < 2:
