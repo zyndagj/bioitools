@@ -24,7 +24,21 @@ $ python setup.py test
 
 ## Usage
 
-Bioitools installs an executable on the path consisting of two main subprograms:
+Bioitools installs an executable on the path consisting of three main subprograms:
+
+### normalize
+```
+usage: bioitools normalize [-h] [-m STR] BEDGRAPH
+
+Normalizes a bedgraph file
+
+positional arguments:
+  BEDGRAPH              Bedgraph file to be smoothed
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m STR, --method STR  Normalization method: - [RPGC] - 1x depth (reads pergenome coverage)
+```
 
 ### smooth
 
