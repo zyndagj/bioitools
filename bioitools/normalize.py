@@ -35,7 +35,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-def rpgcNormalize(inFile, level=1):
+def rpccNormalize(inFile, level=1):
 	from collections import defaultdict
 	from operator import itemgetter
 	BGF = open(inFile, 'r')
@@ -54,6 +54,29 @@ def rpgcNormalize(inFile, level=1):
 		scale = nBases/float(total)
 		for record in genome[chrom]:
 			s, e, v = record
+			oV = v*scale
+			if int(oV) == oV:
+				print '%s\t%i\t%i\t%i'%(chrom, s, e, oV)
+			else:
+				print '%s\t%i\t%i\t%.3f'%(chrom, s, e, oV)
+
+def rpgcNormalize(inFile, level=1):
+	from collections import defaultdict
+	from operator import itemgetter
+	BGF = open(inFile, 'r')
+	noComments = filter(lambda x: x[0] != '#', BGF)
+	genomeList = []
+	# Read Data
+	for line in noComments:
+		tmp = line.rstrip('\n').split('\t')
+		c, s, e, v = tmp[0], int(tmp[1]), int(tmp[2]), float(tmp[3])
+		genome[tmp[0]].append((c,s,e,v))
+	# Process each chrom
+	total = sum(map(itemgetter(3), genome[chrom]))
+	nBases = sum(map(lambda x: x[2]-x[1], genome[chrom]))
+	scale = nBases/float(total)
+	for record in genomeList:
+			chrom, s, e, v = record
 			oV = v*scale
 			if int(oV) == oV:
 				print '%s\t%i\t%i\t%i'%(chrom, s, e, oV)
