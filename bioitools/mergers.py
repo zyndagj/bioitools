@@ -35,54 +35,26 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-def rpccNormalize(inFile, level=1):
-	from collections import defaultdict
-	from operator import itemgetter
-	BGF = open(inFile, 'r')
-	noComments = filter(lambda x: x[0] != '#', BGF)
-	genome = defaultdict(list)
-	# Read Data
-	for line in noComments:
-		tmp = line.rstrip('\n').split('\t')
-		s, e, v = int(tmp[1]), int(tmp[2]), float(tmp[3])
-		genome[tmp[0]].append((s,e,v))
-	# Process each chrom
-	sChroms = sorted(genome.keys())
-	for chrom in sChroms:
-		total = sum(map(itemgetter(2), genome[chrom]))
-		nBases = sum(map(lambda x: x[1]-x[0], genome[chrom]))
-		scale = nBases/float(total)
-		for record in genome[chrom]:
-			s, e, v = record
-			oV = v*scale
-			if int(oV) == oV:
-				print '%s\t%i\t%i\t%i'%(chrom, s, e, oV)
-			else:
-				print '%s\t%i\t%i\t%.3f'%(chrom, s, e, oV)
+from bioitools.fileParsers import bedgraph
+from operator import itemgetter
+from itertools import izip
+import numpy as np
 
-def rpgcNormalize(inFile, level=1):
-	from collections import defaultdict
-	from operator import itemgetter
-	BGF = open(inFile, 'r')
-	noComments = filter(lambda x: x[0] != '#', BGF)
-	genomeList = []
-	# Read Data
-	for line in noComments:
-		tmp = line.rstrip('\n').split('\t')
-		c, s, e, v = tmp[0], int(tmp[1]), int(tmp[2]), float(tmp[3])
-		genomeList.append((c,s,e,v))
-	# Process each chrom
-	total = sum(map(itemgetter(3), genomeList))
-	nBases = sum(map(lambda x: x[2]-x[1], genomeList))
-	scale = nBases/float(total)
-	for record in genomeList:
-			chrom, s, e, v = record
-			oV = v*scale
-			if int(oV) == oV:
-				print '%s\t%i\t%i\t%i'%(chrom, s, e, oV)
-			else:
-				print '%s\t%i\t%i\t%.3f'%(chrom, s, e, oV)
-
-if __name__ == "__main__":
-	main()
-
+def mergeBG(inFiles, method='mean'):
+	agg_dict = {'sum':np.sum, 'mean':np.mean, 'max':np.max}
+	agg = agg_dict[method]
+	# Open all the files
+	fHandles = map(bedgraph, inFiles)
+	nFiles = len(inFiles)
+	for lines in izip(*fHandles):
+		assert(len(lines) == nFiles)
+		for i in range(3):
+			vals = map(itemgetter(i), lines)
+			assert(len(set(vals)) == 1)
+		c,s,e = lines[0][:3]
+		vals = map(lambda x: float(x[3][0]), lines)
+		res = agg(vals)
+		if int(res) == res:
+			yield '%s\t%i\t%i\t%i'%(c,s,e,res)
+		else:
+			yield '%s\t%i\t%i\t%f'%(c,s,e,res)

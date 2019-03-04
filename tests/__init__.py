@@ -6,6 +6,7 @@ from bioitools import smoothers
 from bioitools import correlations
 from bioitools import fileParsers
 from bioitools import normalize
+from bioitools import mergers
 from StringIO import StringIO
 import sys
 
@@ -59,6 +60,30 @@ class TestBioitools(unittest.TestCase):
 1	70	80	0
 '''
 		self.assertMultiLineEqual(retVal, goodVal)
+	def test_rpccNormalize(self):
+		# Need to improve this test with another chromosome
+		sys.stdout = StringIO()
+		normalize.rpccNormalize(self.goodBed)
+		retVal = sys.stdout.getvalue()
+		goodVal = '''1	0	10	5
+1	10	20	10
+1	20	30	15
+1	30	40	5
+1	40	50	10
+1	50	60	15
+1	60	70	20
+1	70	80	0
+'''
+		self.assertMultiLineEqual(retVal, goodVal)
+	def test_merge_mean(self):
+		good2 = [self.goodBed, self.goodBed]
+		with open(self.goodBed,'r') as F:
+			self.assertEqual(list(mergers.mergeBG(good2, method='mean')), map(lambda x: x.rstrip('\n'), F.readlines()))
+	def test_merge_max(self):
+		good2 = [self.goodBed, self.goodBed]
+		with open(self.goodBed,'r') as F:
+			self.assertEqual(list(mergers.mergeBG(good2, method='max')), map(lambda x: x.rstrip('\n'), F.readlines()))
+
 
 if __name__ == '__main__':
     unittest.main()

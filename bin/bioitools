@@ -7,6 +7,7 @@ from bioitools import smoothers
 from bioitools import normalize
 from bioitools import correlations
 from bioitools import fileParsers
+from bioitools import mergers
 import argparse
 
 def main():
@@ -61,6 +62,17 @@ def main():
 	parser_assemblyStats.add_argument('--title', metavar="STR", help='Title for figure')
 	parser_assemblyStats.add_argument('infile',metavar="FASTA", help="Fasta file for input", nargs=1, type=_checkFile().fasta)
 	parser_assemblyStats.set_defaults(func=assemblyStats)
+	##############################################
+	#  merge
+	##############################################
+	parser_merge = subparsers.add_parser('merge', help="Utilities for merging files", description="Utilities for merging files")
+	parser_merge.add_argument('--bg', action="store_true", help='Merge bedgraph files')
+	mMethods = ('max','mean','sum')
+	parser_merge.add_argument('-m','--method', metavar="STR",\
+		help="Smoothing method ("+'|'.join(mMethods)+" Default:%(default)s)",\
+		type=_argChecker(mMethods, "method").check, default="mean")
+	parser_merge.add_argument('infiles',metavar='BEDGRAPH', help="Bedgraph files to be merged", type=_checkFile().bedgraph, nargs='+')
+	parser_merge.set_defaults(func=merge)
 	##############################################
 	# Parse and RUN
 	##############################################
@@ -155,6 +167,11 @@ def assemblyStats(args):
 			break
 	print('%-25s:%i'%("N50",N50))
 	print('%-25s:%i'%("L50",L50))
+
+def merge(args):
+	if args.bg:
+		for line in mergers.mergeBG(inFiles=args.infiles, method=args.method):
+			print(line)
 
 if __name__ == "__main__":
 	main()
