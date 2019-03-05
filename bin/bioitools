@@ -74,6 +74,29 @@ def main():
 	parser_merge.add_argument('infiles',metavar='BEDGRAPH', help="Bedgraph files to be merged", type=_checkFile().bedgraph, nargs='+')
 	parser_merge.set_defaults(func=merge)
 	##############################################
+	#  operations
+	##############################################
+	helpStr = "Utilities running operations on two bedgraph files"
+	parser_op = subparsers.add_parser('operations', help=helpStr, description=helpStr)
+	parser_op.add_argument('-a', help="File A", type=_checkFile().bedgraph)
+	parser_op.add_argument('-b', help="File B", type=_checkFile().bedgraph)
+	oMethods = ('+','-','/','*')
+	parser_op.add_argument('-m','--method', metavar="STR",\
+		help="A ("+', '.join(oMethods)+" B",\
+		type=_argChecker(oMethods, "method").check, required=True)
+	parser_op.set_defaults(func=op)
+	##############################################
+	#  filters
+	##############################################
+	parser_merge = subparsers.add_parser('merge', help="Utilities for merging files", description="Utilities for merging files")
+	parser_merge.add_argument('--bg', action="store_true", help='Merge bedgraph files')
+	mMethods = ('max','mean','sum')
+	parser_merge.add_argument('-m','--method', metavar="STR",\
+		help="Smoothing method ("+'|'.join(mMethods)+" Default:%(default)s)",\
+		type=_argChecker(mMethods, "method").check, default="mean")
+	parser_merge.add_argument('infiles',metavar='BEDGRAPH', help="Bedgraph files to be merged", type=_checkFile().bedgraph, nargs='+')
+	parser_merge.set_defaults(func=merge)
+	##############################################
 	# Parse and RUN
 	##############################################
 	args = parser.parse_args()
@@ -172,6 +195,12 @@ def merge(args):
 	if args.bg:
 		for line in mergers.mergeBG(inFiles=args.infiles, method=args.method):
 			print(line)
+
+def op(args):
+	from bioitools.opererations import add, subtract, multiply, divide
+	op_dict = {'+':add, '-':subtract, '*':multiply, '/':divide}
+	op = op_dict[args.m]
+	for line in op(args.a, args.b): print line
 
 if __name__ == "__main__":
 	main()
