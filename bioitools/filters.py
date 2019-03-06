@@ -39,10 +39,11 @@ from bioitools.fileParsers import bedgraph
 from bioitools import ParseBedgraph
 import numpy as np
 
-def outlying(inFile, method='mean', std_mul=2, min_run=5, ddof=1):
+def outlying(inFile, method='mean', std_mul=2, min_run=5, ddof=1, sqrt=True):
 	agg_dict = {'mean':np.mean, 'median':np.median}
 	agg = agg_dict[method]
 	vA = ParseBedgraph(inFile, vOnly=True)
+	if sqrt: vA = np.sqrt(vA)
 	midVal = agg(vA)
 	std = np.std(vA, ddof=ddof)
 	minThresh = midVal-std_mul*float(std)
@@ -50,7 +51,10 @@ def outlying(inFile, method='mean', std_mul=2, min_run=5, ddof=1):
 	tmpStack = []
 	for c,s,e,v in bedgraph(inFile):
 		res = float(v[0])
-		if res > maxThresh or res < minThresh:
+		tres = res
+		if sqrt:
+			tres = np.sqrt(res)
+		if tres > maxThresh or (tres < minThresh and tres > 0):
 			if int(res) == res:
 				outStr = '%s\t%i\t%i\t%i'%(c,s,e,res)
 			else:

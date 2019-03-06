@@ -103,7 +103,8 @@ class TestBioitools(unittest.TestCase):
 1	30	40	1
 1	40	50	1
 1	50	60	1
-1	60	70	1'''
+1	60	70	1
+1	70	80	0'''
 		self.assertMultiLineEqual('\n'.join(list(operations.divide(*good2))), goodVal)
 	def test_operation_add(self):
 		good2 = [self.goodBed, self.goodBed]
@@ -139,11 +140,10 @@ class TestBioitools(unittest.TestCase):
 1	70	80	0'''
 		self.assertMultiLineEqual('\n'.join(list(operations.multiply(*good2))), goodVal)
 	def test_filters_outlying(self):
-		goodVal = '''1	60	70	4
-1	70	80	0'''
-		gen = filters.outlying(self.goodBed, std_mul=1, min_run=2)
+		goodVal = '''1	60	70	4'''
+		gen = filters.outlying(self.goodBed, std_mul=1, min_run=1, sqrt=False)
 		self.assertMultiLineEqual('\n'.join(list(gen)), goodVal)
-		gen = filters.outlying(self.goodBed, std_mul=1, min_run=5)
+		gen = filters.outlying(self.goodBed, std_mul=1, min_run=5, sqrt=False)
 		self.assertMultiLineEqual('\n'.join(list(gen)), '')
 		
 

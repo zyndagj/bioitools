@@ -67,10 +67,10 @@ def _op(fileA, fileB, op):
 		valA = float(lineA[3][0])
 		valB = float(lineB[3][0])
 		if op == 'divide' and (valA == 0 or valB == 0):
-			continue
+			res = 0
 		else:
 			res = operation(valA, valB)
-			if int(res) == res:
-				yield '%s\t%i\t%i\t%i'%(c,s,e,res)
-			else:
-				yield '%s\t%i\t%i\t%f'%(c,s,e,res)
+		if int(res) == res:
+			yield '%s\t%i\t%i\t%i'%(c,s,e,res)
+		else:
+			yield '%s\t%i\t%i\t%f'%(c,s,e,res)

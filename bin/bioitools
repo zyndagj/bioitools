@@ -8,6 +8,7 @@ from bioitools import normalize
 from bioitools import correlations
 from bioitools import fileParsers
 from bioitools import mergers
+from bioitools import filters
 import argparse
 
 def main():
@@ -88,14 +89,23 @@ def main():
 	##############################################
 	#  filters
 	##############################################
-	parser_merge = subparsers.add_parser('merge', help="Utilities for merging files", description="Utilities for merging files")
-	parser_merge.add_argument('--bg', action="store_true", help='Merge bedgraph files')
-	mMethods = ('max','mean','sum')
-	parser_merge.add_argument('-m','--method', metavar="STR",\
-		help="Smoothing method ("+'|'.join(mMethods)+" Default:%(default)s)",\
-		type=_argChecker(mMethods, "method").check, default="mean")
-	parser_merge.add_argument('infiles',metavar='BEDGRAPH', help="Bedgraph files to be merged", type=_checkFile().bedgraph, nargs='+')
-	parser_merge.set_defaults(func=merge)
+	helpStr = "Utilities for filtering regions of a bedgraph"
+	parser_filter = subparsers.add_parser('filters', help=helpStr, description=helpStr)
+	filter_subparsers = parser_filter.add_subparsers()
+	# outlying
+	outStr = "Select outlying regions based on standard deviation"
+	parser_outlying = filter_subparsers.add_parser('outlying', help=outStr, description=outStr)
+	outMethods = ('mean','median')
+	parser_outlying.add_argument('-m','--method', metavar="STR",\
+		help="Summary method ("+'|'.join(outMethods)+" Default:%(default)s)",\
+		type=_argChecker(outMethods, "method").check, default=outMethods[0])
+	parser_outlying.add_argument('-s','--std', metavar="INT", type=int, \
+		help="Standard deviation multiplier limit [%(default)s]", default=2)
+	parser_outlying.add_argument('-r','--run', metavar="INT", type=int, \
+		help="Minimum run length in windows [%(default)s]", default=5)
+	parser_outlying.add_argument('--sqrt', action="store_true", help='sqrt transform the values to make them more gaussian-like')
+	parser_outlying.add_argument('infile',metavar='BEDGRAPH', help="Bedgraph file to filter", type=_checkFile().bedgraph, nargs=1)
+	parser_outlying.set_defaults(func=outlying)
 	##############################################
 	# Parse and RUN
 	##############################################
@@ -197,10 +207,14 @@ def merge(args):
 			print(line)
 
 def op(args):
-	from bioitools.opererations import add, subtract, multiply, divide
+	from bioitools.operations import add, subtract, multiply, divide
 	op_dict = {'+':add, '-':subtract, '*':multiply, '/':divide}
-	op = op_dict[args.m]
+	op = op_dict[args.method]
 	for line in op(args.a, args.b): print line
+
+def outlying(args):
+	for line in filters.outlying(args.infile[0], args.method, args.std, args.run, args.sqrt):
+		print line
 
 if __name__ == "__main__":
 	main()
